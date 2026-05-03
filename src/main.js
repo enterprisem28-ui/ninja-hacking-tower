@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 // 読み込み先のパスに game/ を追加しました！
 import { ActionScene } from './game/scenes/ActionScene';
 import { SlotScene } from './game/scenes/SlotScene';
