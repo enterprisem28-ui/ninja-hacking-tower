@@ -1,5 +1,4 @@
 import * as Phaser from 'phaser';
-// 読み込み先のパスに game/ を追加しました！
 import { ActionScene } from './game/scenes/ActionScene';
 import { SlotScene } from './game/scenes/SlotScene';
 
@@ -11,6 +10,14 @@ const config = {
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+    // ↓ここを追加！物理エンジン（Arcade Physics）を有効にする
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 800 }, // 下方向への重力（数字が大きいほど落下が速い）
+            debug: false         // 判定の枠線を見たい時は true にします
+        }
     },
     scene: [ActionScene, SlotScene]
 };
