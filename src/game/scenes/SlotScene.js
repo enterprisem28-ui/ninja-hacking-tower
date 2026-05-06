@@ -3,84 +3,126 @@ import * as Phaser from 'phaser';
 export class SlotScene extends Phaser.Scene {
     constructor() {
         super('SlotScene');
-        // スロット用の変数を準備
-        this.reels = [];      // 3つの数字テキストを入れる配列
-        this.reelStates = []; // 各リールが回っているかどうかの状態(true/false)
-        this.spaceKey = null; // 操作用のスペースキー
-        this.timer = 0;       // 数字を切り替える速度を調整するためのタイマー
+        this.reels = [[], [], []]; 
+        this.spinTimers = [null, null, null];
+        this.isSpinning = [false, false, false];
+    }
+
+    // ==========================================
+    // ★ 新規追加：音声ファイルを読み込む
+    // ==========================================
+    preload() {
+        // publicフォルダに用意したmp3ファイルを読み込みます
+        this.load.audio('se_start', '/start.mp3');
+        this.load.audio('se_stop', '/stop.mp3');
+        this.load.audio('se_win', '/win.mp3');
     }
 
     create() {
-        this.cameras.main.setViewport(0, 350, 400, 350);
-        this.cameras.main.setBackgroundColor('#333333');
+        this.cameras.main.setViewport(0, 350, 400, 250);
+        this.cameras.main.setBackgroundColor('#222222');
 
-        this.add.text(20, 20, 'HACKING SLOT AREA', { 
-            font: '24px Arial', 
-            fill: '#00ff00' 
+        this.add.text(20, 15, 'HACKING SLOT', { fontSize: '18px', fill: '#00ff00', fontStyle: 'bold' });
+
+        const spinBtn = this.add.rectangle(330, 25, 100, 35, 0x00aa00).setInteractive({ useHandCursor: true });
+        this.add.text(330, 25, 'SPIN', { fontSize: '20px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+
+        spinBtn.on('pointerdown', () => {
+            this.startAll();
         });
 
-        const reelWidth = 80;
-        const reelHeight = 120;
-        const frameColor = 0x00ff00;
-        const frameThickness = 4;
-        
-        // リールの位置（X座標）
-        const reelX = [100, 200, 300];
+        const colX = [80, 200, 320];
+        const rowY = [75, 125, 175];
 
-        // 3つの枠と、その中の数字（テキスト）を作成
-        for (let i = 0; i < 3; i++) {
-            // 枠を描画
-            this.add.rectangle(reelX[i], 175, reelWidth, reelHeight)
-                .setStrokeStyle(frameThickness, frameColor);
-            
-            // 数字テキストを描画（初期値は'0'）
-            const text = this.add.text(reelX[i], 175, '0', {
-                font: '64px Arial',
-                fill: '#ffffff'
-            }).setOrigin(0.5); // テキストの中心を座標(reelX, 175)に合わせる
+        for (let c = 0; c < 3; c++) {
+            this.add.rectangle(colX[c], 125, 80, 150).setStrokeStyle(4, 0x00aa00);
 
-            this.reels.push(text);      // 配列にテキストを保存
-            this.reelStates.push(false); // 初期状態は「止まっている(false)」
-        }
-
-        // スペースキーを入力として登録
-        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        // スペースキーが「押された瞬間」の処理
-        this.spaceKey.on('down', () => {
-            // もし3つとも止まっていたら、全部回し始める（スタート）
-            if (!this.reelStates[0] && !this.reelStates[1] && !this.reelStates[2]) {
-                this.reelStates = [true, true, true];
-            } 
-            // それ以外（どれかが回っている）なら、左から順番に止める
-            else {
-                if (this.reelStates[0]) {
-                    this.reelStates[0] = false; // 左を止める
-                } else if (this.reelStates[1]) {
-                    this.reelStates[1] = false; // 真ん中を止める
-                } else if (this.reelStates[2]) {
-                    this.reelStates[2] = false; // 右を止める
-                }
+            for (let r = 0; r < 3; r++) {
+                let numText = this.add.text(colX[c], rowY[r], '0', { fontSize: '40px', fill: '#ffffff' }).setOrigin(0.5);
+                this.reels[c].push(numText);
             }
-        });
+
+            let stopBtn = this.add.rectangle(colX[c], 225, 70, 30, 0xcc0000).setInteractive({ useHandCursor: true });
+            this.add.text(colX[c], 225, 'STOP', { fontSize: '16px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+
+            stopBtn.on('pointerdown', () => {
+                this.stopColumn(c);
+            });
+        }
     }
 
-    update(time, delta) {
-        // --- スロットの数字をパラパラ変化させる処理 ---
-        // deltaは前回のupdateからの経過時間（ミリ秒）
-        this.timer += delta;
+    startAll() {
+        if (this.isSpinning.includes(true)) return;
 
-        // 50ミリ秒ごとに数字を更新する（数字を小さくすると回転が速くなる）
-        if (this.timer > 50) {
-            for (let i = 0; i < 3; i++) {
-                // そのリールが「回っている(true)」状態なら
-                if (this.reelStates[i]) {
-                    // 0〜9のランダムな整数を生成してテキストを書き換える
-                    const randomNum = Phaser.Math.Between(0, 9);
-                    this.reels[i].setText(randomNum.toString());
-                }
+        for(let c = 0; c < 3; c++) {
+            for(let r = 0; r < 3; r++) {
+                this.reels[c][r].setColor('#ffffff');
             }
-            this.timer = 0; // タイマーをリセット
+        }
+
+        this.events.emit('slot_start');
+
+        // ★ 音を鳴らす①：スピン開始音！
+        this.sound.play('se_start');
+
+        for (let c = 0; c < 3; c++) {
+            this.isSpinning[c] = true;
+            this.spinTimers[c] = this.time.addEvent({
+                delay: 50,
+                callback: () => {
+                    for(let r = 0; r < 3; r++) {
+                        this.reels[c][r].setText(Phaser.Math.Between(1, 3).toString());
+                    }
+                },
+                loop: true
+            });
+        }
+    }
+
+    stopColumn(colIndex) {
+        if (!this.isSpinning[colIndex]) return;
+
+        // ★ 音を鳴らす②：リール停止音！
+        this.sound.play('se_stop');
+
+        this.spinTimers[colIndex].remove();
+        this.isSpinning[colIndex] = false;
+
+        if (!this.isSpinning.includes(true)) {
+            this.checkWin();
+        }
+    }
+
+    checkWin() {
+        let isWin = false;
+
+        const lines = [
+            [{c:0, r:0}, {c:1, r:0}, {c:2, r:0}],
+            [{c:0, r:1}, {c:1, r:1}, {c:2, r:1}],
+            [{c:0, r:2}, {c:1, r:2}, {c:2, r:2}],
+            [{c:0, r:0}, {c:1, r:1}, {c:2, r:2}],
+            [{c:0, r:2}, {c:1, r:1}, {c:2, r:0}]
+        ];
+
+        lines.forEach(line => {
+            let p1 = this.reels[line[0].c][line[0].r];
+            let p2 = this.reels[line[1].c][line[1].r];
+            let p3 = this.reels[line[2].c][line[2].r];
+
+            if (p1.text === p2.text && p2.text === p3.text) {
+                isWin = true;
+                p1.setColor('#ffff00');
+                p2.setColor('#ffff00');
+                p3.setColor('#ffff00');
+            }
+        });
+
+        if (isWin) {
+            // ★ 音を鳴らす③：当たりのファンファーレ！
+            this.sound.play('se_win');
+            this.events.emit('slot_win');
+        } else {
+            this.events.emit('slot_lose');
         }
     }
 }
