@@ -30,11 +30,10 @@ export class SlotLogic {
     }
 
     // 第1停止で選択したルートをテキストで返す
-    getFirstAction() {
+   getFirstAction() {
         if (this.pushOrder.length === 0) return null;
         const first = this.pushOrder[0];
         if (first === 0) return '【左の扉】へ進むルートを選択した！';
-        if (first === 1) return '【直進】して戦闘ルートを選択した！';
+        if (first === 1) return '【 ？ × ？ 】\n己の勘で残りのリールを止めろ！'; // 中押しは単なる押し順当て
         if (first === 2) return '【右の扉】へ進むルートを選択した！';
-    }
-}
+   }

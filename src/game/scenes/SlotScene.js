@@ -46,7 +46,7 @@ export class SlotScene extends Phaser.Scene {
         this.enemyGraphic = this.add.rectangle(200, 90, 80, 80, 0xaa0000);
 
         // 状況表示テキスト（Y座標を 150 から 220 に下げて敵と被らないように調整）
-        this.dungeonText = this.add.text(200, 220, '【 地下1階：通路 】\n薄暗い通路だ。前方に敵の気配がする。\n\n左リール：左の扉へ\n中リール：直進して戦闘\n右リール：右の扉へ', { 
+        this.dungeonText.setText('【 地下1階：通路 】\n前方に２つの扉がある。\n\n左リール：左の扉\n右リール：右の扉\n中リール：? × ?');
             fontSize: '18px', 
             fill: '#ffffff', 
             align: 'center',
@@ -126,7 +126,7 @@ export class SlotScene extends Phaser.Scene {
         this.logic.leverOn();
 
         // スピン開始時にダンジョンのテキストを初期化
-        this.dungeonText.setText('【 地下1階：通路 】\n薄暗い通路だ。前方に敵の気配がする。\n\n左リール：左の扉へ\n中リール：直進して戦闘\n右リール：右の扉へ');
+        this.dungeonText.setText('【 地下1階：通路 】\n前方に２つの扉がある。\n\n左リール：左の扉\n右リール：右の扉\n中リール：? × ?');
 
         // リール回転開始
         for (let i = 0; i < 3; i++) {
