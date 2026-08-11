@@ -76,10 +76,10 @@ export class SlotScene extends Phaser.Scene {
             // STOPボタン（Y座標に +300 して下半分に移動）
             let btn = this.add.rectangle(colX[i], 550, 80, 35, 0xcc0000).setInteractive({ useHandCursor: true });
             this.add.text(colX[i], 550, 'STOP', { fontSize: '16px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
-            btn.on('pointerdown', () => this.stopReel(i));
-        }
-    }
-// --- ▼ 追加箇所：ダメージ演出用のアニメーション関数 ▼ ---
+           btn.on('pointerdown', () => this.stopReel(i));
+        } // ← forループの終わり
+
+    // --- ▼ 追加箇所：ダメージ演出用のアニメーション関数 ▼ ---
     animateEnemyDamage() {
         // ダメージを受けた瞬間に一瞬白く光らせる
         this.enemyGraphic.setFillStyle(0xffffff);
@@ -87,13 +87,13 @@ export class SlotScene extends Phaser.Scene {
         // 左右に激しく揺らすアニメーション（Tween）
         this.tweens.add({
             targets: this.enemyGraphic,
-            x: { from: 190, to: 210 }, // X座標を左右に動かす
-            yoyo: true,                // 動いた後、元の位置に戻る動きを有効化
-            duration: 40,              // 1回の揺れのスピード（40ミリ秒＝かなり速い）
-            repeat: 3,                 // 3回繰り返す
+            x: { from: 190, to: 210 },
+            yoyo: true,
+            duration: 40,
+            repeat: 3,
             onComplete: () => {
-                this.enemyGraphic.setX(200);             // 最後に確実な中央位置に戻す
-                this.enemyGraphic.setFillStyle(0xaa0000); // 色も元の赤色に戻す
+                this.enemyGraphic.setX(200);
+                this.enemyGraphic.setFillStyle(0xaa0000);
             }
         });
     }
@@ -232,4 +232,3 @@ export class SlotScene extends Phaser.Scene {
 
         this.updateUI();
     }
-}
