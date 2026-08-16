@@ -1,8 +1,8 @@
 export class GameStatus {
     constructor() {
         // プレイヤーのステータス
-        this.hp = 100;
-        this.battery = 100;
+        this.hp = 10;
+        this.battery = 10;
 
         // 敵のステータスと階層
         this.floor = 1;

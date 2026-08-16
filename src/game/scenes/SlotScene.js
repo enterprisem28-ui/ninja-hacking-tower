@@ -35,7 +35,7 @@ export class SlotScene extends Phaser.Scene {
         
         this.enemyGraphic = this.add.rectangle(200, 90, 80, 80, 0xaa0000);
 
-        this.dungeonText = this.add.text(400, 220, `【 地下${this.status.floor}階：通路 】\n前方に2つの扉がある。\n\n左リール：左の扉\n右リール：右の扉\n中リール：? × ?`, {
+        this.dungeonText = this.add.text(200, 220, `【 地下${this.status.floor}階：通路 】\n前方に2つの扉がある。\n\n左リール：左の扉\n右リール：右の扉\n中リール：? × ?`, {
             fontSize: '18px',
             fill: '#ffffff',
             align: 'center',
