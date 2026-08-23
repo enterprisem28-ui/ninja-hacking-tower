@@ -1,21 +1,12 @@
 export class GameStatus {
     constructor() {
-        // プレイヤーのステータス
-        this.hp = 10;
-        this.battery = 10;
+        // プレイヤーのステータス（バッテリーを廃止し、HPのみに統一）
+        this.hp = 100;
 
         // 敵のステータスと階層
         this.floor = 1;
-        this.enemyMaxHp = 30; // 敵の最大HP
-        this.enemyHp = this.enemyMaxHp; // 現在の敵のHP
-    }
-
-    // スピン時のバッテリー消費（足りなければ回せない）
-    consumeBattery() {
-        if (this.battery <= 0) return false;
-        this.battery -= 5;
-        if (this.battery < 0) this.battery = 0;
-        return true;
+        this.enemyMaxHp = 30;
+        this.enemyHp = this.enemyMaxHp;
     }
 
     // 役が揃った時の効果適用
@@ -23,18 +14,18 @@ export class GameStatus {
         if (type === 0) return "強力な攻撃を繰り出した！";
         if (type === 1) return "防御の構えをとった！";
         
-        // ベル(2)でバッテリー回復
+        // ベル(2)の効果を「HPの小回復」に変更
         if (type === 2) {
-            this.battery += 20;
-            if (this.battery > 100) this.battery = 100;
-            return "バッテリーを回復した！";
+            this.hp += 10;
+            if (this.hp > 100) this.hp = 100;
+            return "HPを少し回復した！";
         }
         
-        // チェリー(3)でHP回復
+        // チェリー(3)は「HPの大回復」
         if (type === 3) {
             this.hp += 20;
             if (this.hp > 100) this.hp = 100;
-            return "HPを回復した！";
+            return "HPを大きく回復した！";
         }
         
         return "アクション成功！";
@@ -47,15 +38,15 @@ export class GameStatus {
         return this.enemyHp;
     }
 
-    // 次の階層へ進む処理（敵がタフになる）
+    // 次の階層へ進む処理
     nextFloor() {
         this.floor++;
         this.enemyMaxHp += 10; 
         this.enemyHp = this.enemyMaxHp;
     }
 
-    // UIに表示するテキストの生成
+    // UIに表示するテキストの生成（BATTの表示を削除）
     getStatusText() {
-        return `HP: ${this.hp} | BATT: ${this.battery} | 地下${this.floor}階 (敵HP: ${this.enemyHp}/${this.enemyMaxHp})`;
+        return `HP: ${this.hp} | 地下${this.floor}階 (敵HP: ${this.enemyHp}/${this.enemyMaxHp})`;
     }
 }

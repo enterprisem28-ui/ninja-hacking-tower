@@ -10,7 +10,7 @@ export class SlotScene extends Phaser.Scene {
         this.reelPositions = [0, 0, 0];
         this.isSpinning = [false, false, false];
         this.spinTimers = [null, null, null];
-        this.isGameOver = false; // ★ 追加：ゲームオーバー判定
+        this.isGameOver = false;
         
         this.status = new GameStatus();
         this.logic = new SlotLogic();
@@ -33,7 +33,66 @@ export class SlotScene extends Phaser.Scene {
 
         this.add.rectangle(200, 150, 380, 280, 0x000000).setStrokeStyle(4, 0xffffff);
         
-        this.enemyGraphic = this.add.rectangle(200, 90, 80, 80, 0xaa0000);
+        // 1. サイバーな敵グラフィック（コンテナ構成：将来の画像差し替え対応）
+        this.enemyContainer = this.add.container(200, 90);
+        
+        // 将来的にスプライト（画像）に差し替える場合のプレースホルダーとして保持
+        this.enemySprite = null; // 例: this.add.image(0, 0, 'enemy_image')
+        
+        // ドローン/ロボット風サイバーグラフィックス
+        this.enemyGraphics = this.add.graphics();
+        this.drawCyberEnemy(0xaa0000, 0xff3333);
+        this.enemyContainer.add(this.enemyGraphics);
+
+        // 2. 常にフワフワと上下にゆっくり移動する浮遊アニメーション (Tween)
+        this.tweens.add({
+            targets: this.enemyContainer,
+            y: { from: 85, to: 95 },
+            yoyo: true,
+            repeat: -1,
+            duration: 1500,
+            ease: 'Sine.easeInOut'
+        });
+
+        // 3. 一人称視点「ハッキングバイザー」風の四隅L字型装飾ライン（UI）
+        const visorGraphics = this.add.graphics();
+        visorGraphics.lineStyle(2, 0x00ff66, 0.7);
+        const margin = 12;
+        const len = 25;
+        const w = 400;
+        const h = 600;
+
+        // 左上
+        visorGraphics.beginPath();
+        visorGraphics.moveTo(margin, margin + len);
+        visorGraphics.lineTo(margin, margin);
+        visorGraphics.lineTo(margin + len, margin);
+        visorGraphics.strokePath();
+
+        // 右上
+        visorGraphics.beginPath();
+        visorGraphics.moveTo(w - margin - len, margin);
+        visorGraphics.lineTo(w - margin, margin);
+        visorGraphics.lineTo(w - margin, margin + len);
+        visorGraphics.strokePath();
+
+        // 左下
+        visorGraphics.beginPath();
+        visorGraphics.moveTo(margin, h - margin - len);
+        visorGraphics.lineTo(margin, h - margin);
+        visorGraphics.lineTo(margin + len, h - margin);
+        visorGraphics.strokePath();
+
+        // 右下
+        visorGraphics.beginPath();
+        visorGraphics.moveTo(w - margin - len, h - margin);
+        visorGraphics.lineTo(w - margin, h - margin);
+        visorGraphics.lineTo(w - margin, h - margin - len);
+        visorGraphics.strokePath();
+
+        // バイザーの照準・スキャンラインなどの微小な装飾
+        visorGraphics.lineStyle(1, 0x00ff66, 0.3);
+        visorGraphics.strokeRect(margin + 5, margin + 5, w - (margin + 5) * 2, h - (margin + 5) * 2);
 
         this.dungeonText = this.add.text(200, 220, `【 地下${this.status.floor}階：通路 】\n前方に2つの扉がある。\n\n左リール：左の扉\n右リール：右の扉\n中リール：? × ?`, {
             fontSize: '18px',
@@ -64,17 +123,52 @@ export class SlotScene extends Phaser.Scene {
         this.updateUI();
     }
 
+    drawCyberEnemy(baseColor, glowColor) {
+        this.enemyGraphics.clear();
+        
+        // 外側のサイバーフレーム・装飾プロペラ/ウィング
+        this.enemyGraphics.lineStyle(2, glowColor, 0.8);
+        this.enemyGraphics.strokeRect(-45, -25, 90, 50);
+        
+        // コアボディ（六角形または多角形風）
+        this.enemyGraphics.fillStyle(baseColor, 0.9);
+        this.enemyGraphics.beginPath();
+        this.enemyGraphics.moveTo(-35, 0);
+        this.enemyGraphics.lineTo(-20, -20);
+        this.enemyGraphics.lineTo(20, -20);
+        this.enemyGraphics.lineTo(35, 0);
+        this.enemyGraphics.lineTo(20, 20);
+        this.enemyGraphics.lineTo(-20, 20);
+        this.enemyGraphics.closePath();
+        this.enemyGraphics.fillPath();
+        this.enemyGraphics.strokePath();
+
+        // 中央のサイバーアイ（発光センサー）
+        this.enemyGraphics.fillStyle(glowColor, 1);
+        this.enemyGraphics.fillCircle(0, 0, 8);
+        this.enemyGraphics.lineStyle(1, 0xffffff, 1);
+        this.enemyGraphics.strokeCircle(0, 0, 8);
+
+        // 左右のジェネレーター・フィン
+        this.enemyGraphics.fillStyle(0x333333, 1);
+        this.enemyGraphics.fillRect(-55, -12, 12, 24);
+        this.enemyGraphics.fillRect(43, -12, 12, 24);
+        this.enemyGraphics.lineStyle(1, glowColor, 1);
+        this.enemyGraphics.strokeRect(-55, -12, 12, 24);
+        this.enemyGraphics.strokeRect(43, -12, 12, 24);
+    }
+
     animateEnemyDamage() {
-        this.enemyGraphic.setFillStyle(0xffffff);
+        this.drawCyberEnemy(0xffffff, 0xffffff);
         this.tweens.add({
-            targets: this.enemyGraphic,
+            targets: this.enemyContainer,
             x: { from: 190, to: 210 },
             yoyo: true,
             duration: 40,
             repeat: 3,
             onComplete: () => {
-                this.enemyGraphic.setX(200);
-                this.enemyGraphic.setFillStyle(0xaa0000);
+                this.enemyContainer.setX(200);
+                this.drawCyberEnemy(0xaa0000, 0xff3333);
             }
         });
     }
@@ -89,12 +183,16 @@ export class SlotScene extends Phaser.Scene {
     }
 
     startSpin() {
-        // ★ 変更：ゲームオーバー時は操作不可
         if (this.isGameOver || this.isSpinning.includes(true)) return;
 
-        // ★ 変更：バッテリー消費チェックとバッテリー切れの処理
-        if (!this.status.consumeBattery()) {
-            this.dungeonText.setText(`【 BATTERY EMPTY 】\nデバイスの電源が落ちた。\n通信途絶……任務失敗。\n\n(クリックで再挑戦)`);
+        // ★ 追加：スピンするたびにHPを1消費する
+        this.status.hp -= 1;
+
+        // ★ 追加：スピンの消費でHPが0になった場合のゲームオーバー処理
+        if (this.status.hp <= 0) {
+            this.status.hp = 0;
+            this.updateUI();
+            this.dungeonText.setText(`【 SYSTEM DOWN 】\n行動する体力が尽きた。\nハッキングタワーの闇に飲まれる……\n\n(クリックで再挑戦)`);
             this.handleGameOver();
             return;
         }
@@ -132,7 +230,7 @@ export class SlotScene extends Phaser.Scene {
     }
 
     stopReel(col) {
-        if (this.isGameOver || !this.isSpinning[col]) return; // ★ 変更：ゲームオーバー時は操作不可
+        if (this.isGameOver || !this.isSpinning[col]) return; 
 
         let slide = 0;
         for (let s = 0; s <= 4; s++) {
@@ -175,12 +273,13 @@ export class SlotScene extends Phaser.Scene {
             this.handleWin(winType);
         } else {
             this.events.emit('slot_lose');
+            
+            // 敵からの攻撃でHPが10減る
             this.status.hp -= 10; 
-            if (this.status.hp < 0) this.status.hp = 0; // ★ 追加：HPがマイナスにならないようにする
+            if (this.status.hp < 0) this.status.hp = 0; 
             
             this.animatePlayerDamage();
 
-            // ★ 変更：プレイヤーのHPが0になった時のゲームオーバー処理
             if (this.status.hp <= 0) {
                 this.dungeonText.setText(`【 SYSTEM DOWN 】\nダメージが限界を超えた。\nハッキングタワーの闇に飲まれる……\n\n(クリックで再挑戦)`);
                 this.updateUI();
@@ -213,8 +312,8 @@ export class SlotScene extends Phaser.Scene {
                 this.dungeonText.setText(`【 地下${this.status.floor}階：通路 】\n新たな敵が立ちふさがった！\n\n行動を選択せよ（SPIN）`);
                 this.updateUI();
                 
-                this.enemyGraphic.setAlpha(0);
-                this.tweens.add({ targets: this.enemyGraphic, alpha: 1, duration: 500 });
+                this.enemyContainer.setAlpha(0);
+                this.tweens.add({ targets: this.enemyContainer, alpha: 1, duration: 500 });
             });
         } else {
             this.dungeonText.setText(`【 アクション成功 】\n${resultText}\n\n次の行動を選択せよ（SPIN）`);
@@ -222,17 +321,13 @@ export class SlotScene extends Phaser.Scene {
         }
     }
 
-    // --- ▼ 追加：ゲームオーバー時の専用関数 ▼ ---
     handleGameOver() {
         this.isGameOver = true;
         
-        // 画面全体を少し暗くする演出
         this.add.rectangle(200, 300, 400, 600, 0x000000, 0.6);
 
-        // 画面のどこかをクリックしたら、シーンを再起動（最初からリトライ）
         this.input.once('pointerdown', () => {
             this.scene.restart();
         });
     }
-    // --- ▲ 追加おわり ▲ ---
 }
